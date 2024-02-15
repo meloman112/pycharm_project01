@@ -1,4 +1,6 @@
 import random as rd
+import shutil
+
 import requests
 import zipfile
 import os
@@ -51,16 +53,8 @@ def canSaveImage(new, array):
 def send_zip(ids):
     for id in ids:
         filename = f'screenshots/ID-{id}'
-        zip_path = f'zips/ID-{id}'
-        if os.path.exists(filename) and len(os.listdir(filename)) > 0:
-            zip_folder(filename, zip_path)
-            url = 'https://face.cake-bumer.uz/api/upload-zip'  # Замените на URL вашего сервера
-            file_path = zip_path  # Укажите путь к файлу, который хотите отправить
-            with open(file_path, 'rb') as file:
-                files = {'zip_file': file}
-                response = requests.post(url, files=files)
-            print(response.text)  # Выводим ответ сервера
-
+        #zip_path = f'zips/ID-{id}'
+        archive_and_send(filename)
 
 
 
@@ -86,4 +80,33 @@ def check_ids(ids, ids_dict):
         elif val >= 70:
             no_active_ids.append(key)
     return no_active_ids, new_dict
+
+
+def archive_and_send(directory_path, url='https://face.cake-bumer.uz/api/upload-zip'):
+    """
+    Архивирует указанную папку и отправляет архив на сервер с помощью POST-запроса.
+
+    :param directory_path: Путь к папке, которую нужно архивировать.
+    :param url: URL сервера, на который будет отправлен архив.
+    """
+    # Получение имени папки
+    archive_name = os.path.basename(directory_path)
+
+    # Создание архива из папки
+    archive_path = shutil.make_archive(archive_name, 'zip', directory_path)
+
+    # Отправка архива на сервер
+    with open(archive_path, 'rb') as f:
+        files = {'zip_file': (archive_name + '.zip', f)}
+        response = requests.post(url, files=files)
+
+        # Проверка статуса ответа
+        if response.status_code == 200:
+            print("Архив успешно отправлен.")
+            print(response.text)
+            # Удаление архива и папки после успешной отправки
+            os.remove(archive_path)
+            shutil.rmtree(directory_path)
+        else:
+            print("Ошибка при отправке. Код ответа:", response.status_code)
 

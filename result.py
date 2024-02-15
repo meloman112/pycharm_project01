@@ -7,34 +7,34 @@ import json
 
 def set_result(data):
 
+    for key in data.keys():
+        max_score = max(data[key].items(), key=lambda x: x[1]["score"])[1]
+        max_score_name = max_score['name']
+        max_score_value = max_score['score']
+        name_count = sum(1 for img_data in data[key].values() if img_data["name"] == max_score_name)
+        len_data = len(data[key].values())
 
-
-    names = []
-    scores = []
-
-    for key, value in data['ID-2'].items():
-
-        names.append(value["name"])
-        scores.append(value["score"])
-    return names, scores
+        if max_score_value > 60 and name_count/len_data > 0.7:
+            result = {
+                key: {
+                    "name": max_score_name,
+                    "score": max_score_value
+                }
+            }
+        else:
+            result = {
+                key: {
+                    "name": 'unknown',
+                    "score": max_score_value
+                }
+            }
+        return result
 
 
 with open("db.json", "r") as file:
     data = json.load(file)
 
+    results = set_result(data)
+    print(results)
 
 
-max_score_name = max(data["ID-2"].items(), key=lambda x: x[1]["score"])[1]["name"]
-
-name_count = (sum(1 for img_data in data["ID-2"].values() if img_data["name"] == max_score_name)/len(data["ID-2"].values()))*100
-
-
-print("Имя участника с наибольшей суммой баллов:", max_score_name)
-print(name_count)
-
-# names, scores = set_result(data)
-
-# print(names, scores)
-#
-# name = max(names, key=names.count)
-# print(name)

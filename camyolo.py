@@ -3,7 +3,10 @@ import cv2
 import os
 from ultralytics import YOLO
 import time
-from funcs import check, box, canSaveImage, check_ids
+from funcs import check, box, canSaveImage, check_ids, send_zip
+import threading
+
+
 
 number = 0
 
@@ -60,7 +63,7 @@ else:
                         screenshot = frame[ls[1]:ls[3], ls[0]:ls[2]]
                         # Получаем текущее время
                         now = datetime.now()
-                        filename = f'screenshots/ID-{id}/{number}-{now.strftime("%Y-%m-%d_%H-%M-%S")}.jpg'
+                        filename = f'screenshots/ID-{id}/{number}_{now.strftime("%Y-%m-%d-%H-%M-%S")}.jpg'
                         # Сохраняем скриншот
                         cv2.imwrite(filename, screenshot)
                         number += 1
@@ -69,7 +72,9 @@ else:
                         os.makedirs(f'screenshots/ID-{id}', exist_ok=True)
             ids = [int(a) for a in (result.boxes.id)]
             no_active_ids, ids_dict = check_ids(ids, ids_dict)
-            print(no_active_ids)
+            # тут я хочу не дожидаться выполнения функции
+            thread = threading.Thread(target=send_zip, args=(no_active_ids,))
+            thread.start()
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 

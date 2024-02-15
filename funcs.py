@@ -1,6 +1,7 @@
 import random as rd
 import requests
-
+import zipfile
+import os
 
 # функция проверияет 5 точек на лице если есть все возращает тру
 # принимает keypoint каждого xy
@@ -47,14 +48,31 @@ def canSaveImage(new, array):
     return True
 
 
-def send_zip(file_path):
-    url = 'https://storageapp2elephantsql.pythonanywhere.com/verify-images/'  # Замените на URL вашего сервера
-    file_path = 'zips/screenshots.zip'  # Укажите путь к файлу, который хотите отправить
-    with open(file_path, 'rb') as file:
-        files = {'file': file}
-        response = requests.post(url, files=files)
+def send_zip(ids):
+    for id in ids:
+        filename = f'screenshots/ID-{id}'
+        zip_path = f'zips/ID-{id}'
+        if os.path.exists(filename) and len(os.listdir(filename)) > 0:
+            zip_folder(filename, zip_path)
+            url = 'https://face.cake-bumer.uz/api/upload-zip'  # Замените на URL вашего сервера
+            file_path = zip_path  # Укажите путь к файлу, который хотите отправить
+            with open(file_path, 'rb') as file:
+                files = {'zip_file': file}
+                response = requests.post(url, files=files)
+            print(response.text)  # Выводим ответ сервера
 
-    print(response.text)  # Выводим ответ сервера
+
+
+
+def zip_folder(folder_path, zip_path):
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, _, files in os.walk(folder_path):
+            for file in files:
+                absolute_path = os.path.join(root, file)
+                relative_path = os.path.relpath(absolute_path, folder_path)
+                zipf.write(absolute_path, relative_path)
+        os.rmdir(folder_path)
+    return True
 
 
 def check_ids(ids, ids_dict):
@@ -68,3 +86,4 @@ def check_ids(ids, ids_dict):
         elif val >= 70:
             no_active_ids.append(key)
     return no_active_ids, new_dict
+

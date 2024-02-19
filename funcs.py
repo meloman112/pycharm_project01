@@ -75,11 +75,12 @@ def check_ids(ids, ids_dict):
     for id in ids:
         new_dict[id] = 0
     for key, val in ids_dict.items():
-        if key not in ids and val < 70:
+        if key not in ids and val < 150:
             new_dict[key] = val+1
-        elif val >= 70:
+        elif val >= 150:
             no_active_ids.append(key)
     return no_active_ids, new_dict
+
 
 
 def archive_and_send(directory_path, url='https://face.cake-bumer.uz/api/upload-zip'):
@@ -89,15 +90,25 @@ def archive_and_send(directory_path, url='https://face.cake-bumer.uz/api/upload-
     :param directory_path: Путь к папке, которую нужно архивировать.
     :param url: URL сервера, на который будет отправлен архив.
     """
-    # Получение имени папки
-    archive_name = os.path.basename(directory_path)
+    # Проверка на пустоту папки
+    if not os.listdir(directory_path):
+        print("Папка пуста. Удаляю...")
+        os.rmdir(directory_path)
+        return
+
+    # Получение родительского каталога и имени папки
+    parent_dir = os.path.dirname(directory_path)
+    directory_name = os.path.basename(directory_path)
+
+    # Путь, где будет создан архив (без указания расширения .zip, т.к. make_archive его добавит)
+    archive_path = os.path.join(parent_dir, directory_name)
 
     # Создание архива из папки
-    archive_path = shutil.make_archive(archive_name, 'zip', directory_path)
+    archive_path = shutil.make_archive(archive_path, 'zip', parent_dir, directory_name)
 
     # Отправка архива на сервер
     with open(archive_path, 'rb') as f:
-        files = {'zip_file': (archive_name + '.zip', f)}
+        files = {'zip_file': (os.path.basename(archive_path), f)}
         response = requests.post(url, files=files)
 
         # Проверка статуса ответа
@@ -109,4 +120,3 @@ def archive_and_send(directory_path, url='https://face.cake-bumer.uz/api/upload-
             shutil.rmtree(directory_path)
         else:
             print("Ошибка при отправке. Код ответа:", response.status_code)
-

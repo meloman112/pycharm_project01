@@ -2,35 +2,29 @@ import os
 import shutil
 import requests
 
-
-def archive_and_send(directory_path, url):
+def archive_and_send(directory_path, url='https://face.cake-bumer.uz/api/upload-zip'):
     """
     Архивирует указанную папку и отправляет архив на сервер с помощью POST-запроса.
 
     :param directory_path: Путь к папке, которую нужно архивировать.
     :param url: URL сервера, на который будет отправлен архив.
     """
-    # Получение имени папки
-    archive_name = os.path.basename(directory_path)
+    # Проверка на пустоту папки
+    if not os.listdir(directory_path):
+        print("Папка пуста. Удаляю...")
+        os.rmdir(directory_path)
+        return
+
+    # Получение родительского каталога и имени папки
+    parent_dir = os.path.dirname(directory_path)
+    directory_name = os.path.basename(directory_path)
+
+    # Путь, где будет создан архив (без указания расширения .zip, т.к. make_archive его добавит)
+    archive_path = os.path.join(parent_dir, directory_name)
 
     # Создание архива из папки
-    archive_path = shutil.make_archive(archive_name, 'zip', directory_path)
+    archive_path = shutil.make_archive(archive_path, 'zip', parent_dir, directory_name)
 
-    # Отправка архива на сервер
-    with open(archive_path, 'rb') as f:
-        files = {'zip_file': (archive_name + '.zip', f)}
-        response = requests.post(url, files=files)
+    print(archive_path)
 
-        # Проверка статуса ответа
-        if response.status_code == 200:
-            print("Архив успешно отправлен.")
-            print(response.text)
-
-            # Удаление архива и папки после успешной отправки
-            os.remove(archive_path)
-            shutil.rmtree(directory_path)
-        else:
-            print("Ошибка при отправке. Код ответа:", response.status_code)
-
-
-archive_and_send('runs/pose/track', 'https://face.cake-bumer.uz/api/upload-zip')
+archive_and_send('screenshots/ID-85')

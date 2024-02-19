@@ -11,9 +11,8 @@ import threading
 number = 0
 
 # Load a model
-model = YOLO('yolov8n-pose.pt')  # load a pretrained model (recommended for training)
+model = YOLO('best.pt')  # load a pretrained model (recommended for training)
 
-# Учетные данные для доступа к каsмере
 username = 'admin'
 password = 'Babur2001'
 
@@ -65,7 +64,15 @@ else:
                         now = datetime.now()
                         filename = f'screenshots/ID-{id}/{number}_{now.strftime("%Y-%m-%d-%H-%M-%S")}.jpg'
                         # Сохраняем скриншот
-                        cv2.imwrite(filename, screenshot)
+                        if screenshot.size > 0:
+                            directory = os.path.dirname(filename)
+                            if not os.path.exists(directory):
+                                os.makedirs(directory, exist_ok=True)
+                            cv2.imwrite(filename, screenshot)
+                        else:
+                            print(f"Пустой скриншот для ID-{id}, не сохранено.")
+
+                        #cv2.imwrite(filename, screenshot)
                         number += 1
                     else:
 

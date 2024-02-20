@@ -44,26 +44,22 @@ else:
 
         # Ваши операции с каждым кадром (например, отображение)
         #cv2.imshow('Camera Feed', frame)
-        results = model.track(source=frame, conf=0.5, persist=True)
+        results = model.track(source=frame, conf=0.5, persist=True, show=True)
 
         for result in results:
+            check_person = False
             keypoints_object = result.keypoints
             person_count = keypoints_object.shape[0]
             for i in range(person_count):
                 if check(keypoints_object[i].xy):
+                    check_person = True
                     ls, id = (box(result, i))
                     new = {'id': id, 'created_date': time.time()}
                     if canSaveImage(new, users):
                         users.append(new)
-                    # if ids.get(id):
-                    #     if ids[id] > 10:
-                    #         continue
-                    #     ids[id] += 1
                         screenshot = frame[ls[1]:ls[3], ls[0]:ls[2]]
-                        # Получаем текущее время
                         now = datetime.now()
                         filename = f'screenshots/ID-{id}/{number}_{now.strftime("%Y-%m-%d-%H-%M-%S")}.jpg'
-                        # Сохраняем скриншот
                         if screenshot.size > 0:
                             directory = os.path.dirname(filename)
                             if not os.path.exists(directory):
@@ -77,11 +73,11 @@ else:
                     else:
 
                         os.makedirs(f'screenshots/ID-{id}', exist_ok=True)
-            ids = [int(a) for a in (result.boxes.id)]
-            no_active_ids, ids_dict = check_ids(ids, ids_dict)
-            # тут я хочу не дожидаться выполнения функции
-            thread = threading.Thread(target=send_zip, args=(no_active_ids,))
-            thread.start()
+            if check_person:
+                ids = [int(a) for a in (result.boxes.id)]
+                no_active_ids, ids_dict = check_ids(ids, ids_dict)
+                thread = threading.Thread(target=send_zip, args=(no_active_ids,))
+                thread.start()
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 

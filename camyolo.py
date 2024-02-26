@@ -5,20 +5,20 @@ from ultralytics import YOLO
 import time
 from funcs import check, box, canSaveImage, check_ids, send_zip
 import threading
-
+import torch
 
 
 number = 0
 
 # Load a model
-model = YOLO('best.pt')  # load a pretrained model (recommended for training)
+model = YOLO('yolov8x-pose.pt')  # load a pretrained model (recommended for training)
 
 username = 'admin'
 password = 'Babur2001'
 
 camera_url = f'rtsp://{username}:{password}@192.168.0.119:554/Streaming/Channels/101'
 
-video_url = '4784598_Camden_High Street_Street_3840x2160.mp4'
+video_url = 'videos/2_Obama.mp4'
 
 # Инициализация видеопотока
 cap = cv2.VideoCapture(camera_url)
@@ -34,7 +34,7 @@ if not cap.isOpened():
 else:
     # Отображение видеопотока
     while True:
-
+        start_time = time.time()
         ret, frame = cap.read()
         if not ret:
             print("Не удалось получить кадр.")
@@ -44,7 +44,9 @@ else:
 
         # Ваши операции с каждым кадром (например, отображение)
         #cv2.imshow('Camera Feed', frame)
-        results = model.track(source=frame, conf=0.5, persist=True, show=True)
+        results = model.track(source=frame, conf=0.55, persist=True)
+        anotation_frame = results[0].plot()
+        cv2.imshow('frame', anotation_frame)
 
         for result in results:
             check_person = False
@@ -59,7 +61,7 @@ else:
                         users.append(new)
                         screenshot = frame[ls[1]:ls[3], ls[0]:ls[2]]
                         now = datetime.now()
-                        filename = f'screenshots/ID-{id}/{number}_{now.strftime("%Y-%m-%d-%H-%M-%S")}.jpg'
+                        filename = f'screenshots/group-2_ID-{id}/{number}_{now.strftime("%Y-%m-%d-%H-%M-%S")}.jpg'
                         if screenshot.size > 0:
                             directory = os.path.dirname(filename)
                             if not os.path.exists(directory):
@@ -72,14 +74,18 @@ else:
                         number += 1
                     else:
 
-                        os.makedirs(f'screenshots/ID-{id}', exist_ok=True)
-            if check_person:
-                ids = [int(a) for a in (result.boxes.id)]
-                no_active_ids, ids_dict = check_ids(ids, ids_dict)
-                thread = threading.Thread(target=send_zip, args=(no_active_ids,))
-                thread.start()
+                        os.makedirs(f'screenshots/group-2_ID-{id}', exist_ok=True)
+            if torch.is_tensor(result.boxes.id):
+                ids = [int(a) for a in (result.boxes.id.tolist())]
+            else:
+                ids = []
+            no_active_ids, ids_dict = check_ids(ids, ids_dict)
+            thread = threading.Thread(target=send_zip, args=(no_active_ids,))
+            thread.start()
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
+        end_time = time.time()
+        print(f'==============================={(end_time - start_time)*1000} ms=============================================')
 
     cap.release()
     cv2.destroyAllWindows()

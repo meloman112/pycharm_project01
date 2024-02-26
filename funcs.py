@@ -27,7 +27,11 @@ def box(result, index):
     x3, y3 = x2, y2 + x2 - x1
     ls = [x0-10, y0, x3+10, y3]
     #ls = [int(a) for a in (result.boxes[index].xyxy[0])]
-    id = int(result.boxes[index].id)
+    try:
+        id = int(result.boxes[index].id)
+    except Exception as e:
+        print(e)
+        id = 0
     return ls, id
 
 
@@ -39,11 +43,11 @@ def canSaveImage(new, array):
             for item in array:
                 if item['id'] == new['id']:
                     countImgs += 1
-            if countImgs >= 10:
+            if countImgs >= 25:
                 return False
             userExists = True
             diffTime = new['created_date'] - array[i]['created_date']
-            if diffTime >= 1:
+            if diffTime >= 0.4:
                 return True
             return False
     if not userExists: return True
@@ -52,8 +56,9 @@ def canSaveImage(new, array):
 
 def send_zip(ids):
     for id in ids:
-        filename = f'screenshots/ID-{id}'
-        #zip_path = f'zips/ID-{id}'
+        print(f' -----------------------------------------------------------------------------------Sending zip {ids} -----------------------------------------------------------------------------------')
+        filename = f'screenshots/group-2_ID-{id}'
+        #zip_path = f'zips/group-2_ID-{id}'
         archive_and_send(filename)
 
 
@@ -75,37 +80,41 @@ def check_ids(ids, ids_dict):
     for id in ids:
         new_dict[id] = 0
     for key, val in ids_dict.items():
-        if key not in ids and val < 150:
+        if key not in ids and val < 70:
             new_dict[key] = val+1
-        elif val >= 150:
+        elif val >= 70:
             no_active_ids.append(key)
     return no_active_ids, new_dict
 
 
 
-def archive_and_send(directory_path, url='https://face.cake-bumer.uz/api/upload-zip'):
+def archive_and_send(directory_path, url='https://face2.cake-bumer.uz/api/upload-zip'):
     """
     Архивирует указанную папку и отправляет архив на сервер с помощью POST-запроса.
 
     :param directory_path: Путь к папке, которую нужно архивировать.
     :param url: URL сервера, на который будет отправлен архив.
     """
-    # Проверка на пустоту папки
+    if not os.path.exists(directory_path):
+        print('--------------------------------------------not directory-------------------------------------------------------------------')
+        return
+
     if not os.listdir(directory_path):
-        print("Папка пуста. Удаляю...")
+        print("Папка пуста. Удаляю...---------------------------------------------------delete---------------------------------------------------------------------------------------------------------")
         os.rmdir(directory_path)
         return
 
     # Получение родительского каталога и имени папки
     parent_dir = os.path.dirname(directory_path)
     directory_name = os.path.basename(directory_path)
+    print('-----------------------------------------------------------------------------------------------1------------------------------------------------------------------------------------')
 
     # Путь, где будет создан архив (без указания расширения .zip, т.к. make_archive его добавит)
     archive_path = os.path.join(parent_dir, directory_name)
 
     # Создание архива из папки
     archive_path = shutil.make_archive(archive_path, 'zip', parent_dir, directory_name)
-
+    print('-----------------------------------------------------------------------------------------------2------------------------------------------------------------------------------------')
     # Отправка архива на сервер
     with open(archive_path, 'rb') as f:
         files = {'zip_file': (os.path.basename(archive_path), f)}
@@ -113,10 +122,10 @@ def archive_and_send(directory_path, url='https://face.cake-bumer.uz/api/upload-
 
         # Проверка статуса ответа
         if response.status_code == 200:
-            print("Архив успешно отправлен.")
+            print("Архив успешно отправлен.------------------------------------------------------------------------------------------------------------------------------------------------------------")
             print(response.text)
             # Удаление архива и папки после успешной отправки
-            os.remove(archive_path)
+            #os.remove(archive_path)
             shutil.rmtree(directory_path)
         else:
             print("Ошибка при отправке. Код ответа:", response.status_code)

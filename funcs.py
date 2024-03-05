@@ -43,7 +43,7 @@ def canSaveImage(new, array):
             for item in array:
                 if item['id'] == new['id']:
                     countImgs += 1
-            if countImgs >= 25:
+            if countImgs >= 10:
                 return False
             userExists = True
             diffTime = new['created_date'] - array[i]['created_date']
@@ -95,22 +95,21 @@ def archive_and_send(directory_path, url='https://face2.cake-bumer.uz/api/upload
     :param directory_path: Путь к папке, которую нужно архивировать.
     :param url: URL сервера, на который будет отправлен архив.
     """
-    if not os.path.exists(directory_path):
-        print('--------------------------------------------not directory-------------------------------------------------------------------')
-        return
 
-    if not os.listdir(directory_path):
-        print("Папка пуста. Удаляю...---------------------------------------------------delete---------------------------------------------------------------------------------------------------------")
-        os.rmdir(directory_path)
-        return
 
     # Получение родительского каталога и имени папки
     parent_dir = os.path.dirname(directory_path)
     directory_name = os.path.basename(directory_path)
     print('-----------------------------------------------------------------------------------------------1------------------------------------------------------------------------------------')
 
+
     # Путь, где будет создан архив (без указания расширения .zip, т.к. make_archive его добавит)
     archive_path = os.path.join(parent_dir, directory_name)
+    print(archive_path)
+
+    # Проверка существования файла архива и его удаление
+    if os.path.exists(archive_path + '.zip'):
+        os.remove(archive_path + '.zip')
 
     # Создание архива из папки
     archive_path = shutil.make_archive(archive_path, 'zip', parent_dir, directory_name)

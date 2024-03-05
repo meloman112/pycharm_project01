@@ -11,7 +11,7 @@ import torch
 number = 0
 
 # Load a model
-model = YOLO('yolov8x-pose.pt')  # load a pretrained model (recommended for training)
+model = YOLO('yolov8n-pose.pt')  # load a pretrained model (recommended for training)
 
 username = 'admin'
 password = 'Babur2001'
